@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guilds {
+  id       String     @id
+  bots     Bots?
+  Commands Commands[]
+  Modules  Modules[]
+  Users    Users[]
+
+  @@map("guilds")
+}
+
+model Modules {
+  id       String     @id @default(uuid())
+  name     String
+  isActive Boolean    @map("is_active")
+  guildId  String     @map("guild_id")
+  commands Commands[]
+  guild    Guilds     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@map("modules")
+}
+
+model Commands {
+  id          String        @id @default(uuid())
+  name        String
+  moduleId    String        @map("module_id")
+  isActive    Boolean       @map("is_active")
+  guildId     String        @map("guild_id")
+  guild       Guilds        @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  module      Modules       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  permissions Permissions[]
+
+  @@map("commands")
+}
+
+model Permissions {
+  id        String   @id @default(uuid())
+  name      String
+  type      String
+  commandId String   @map("command_id")
+  command   Commands @relation(fields: [commandId], references: [id], onDelete: Cascade)
+
+  @@map("permissions")
+}
+
+model Users {
+  id           String    @id
+  accessToken  String?   @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  authType     String?   @map("auth_type")
+  dateExpires  DateTime? @map("date_expires")
+  guildId      String?   @map("guild_id")
+  guild        Guilds?   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@map("users")
+}
+
+model Bots {
+  id              String    @id
+  token           String
+  guildId         String    @unique @map("guild_id")
+  lastDateStarted DateTime? @map("last_date_start")
+  guilds          Guilds    @relation(fields: [guildId], references: [id])
+
+  @@map("bots")
+}
